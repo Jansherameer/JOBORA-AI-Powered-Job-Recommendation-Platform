@@ -1,0 +1,47 @@
+# Master .gitignore for Jobora
+
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Build
+dist/
+build/
+.next/
+out/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.venv/
+env/
+bin/
+lib/
+include/
+pydoc/
+.pytest_cache/
+
+# Databases
+*.sqlite
+prisma/migrations/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Project Specific
+server/uploads/
+ai-service/venv/
+client/node_modules/
+server/node_modules/

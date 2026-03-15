@@ -1,0 +1,60 @@
+// Prisma Schema for Job Recommendation Platform
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id              Int               @id @default(autoincrement())
+  name            String
+  email           String            @unique
+  hashedPassword  String            @map("hashed_password")
+  resumePath      String?           @map("resume_path")
+  resumeText      String?           @map("resume_text")
+  skills          Json?             @default("[]")
+  embedding       Float[]           @default([])
+  role            String            @default("user")
+  createdAt       DateTime          @default(now()) @map("created_at")
+  updatedAt       DateTime          @updatedAt @map("updated_at")
+  recommendations Recommendation[]
+
+  @@map("users")
+}
+
+model Job {
+  id               Int               @id @default(autoincrement())
+  title            String
+  company          String
+  description      String
+  location         String
+  category         String
+  experienceLevel  String            @map("experience_level")
+  requiredSkills   Json              @default("[]") @map("required_skills")
+  embedding        Float[]           @default([])
+  externalId       String?           @unique @map("external_id")
+  applyLink        String?           @map("apply_link")
+  deadline         DateTime?
+  createdAt        DateTime          @default(now()) @map("created_at")
+  updatedAt        DateTime          @updatedAt @map("updated_at")
+  recommendations  Recommendation[]
+
+  @@map("jobs")
+}
+
+model Recommendation {
+  id        Int      @id @default(autoincrement())
+  userId    Int      @map("user_id")
+  jobId     Int      @map("job_id")
+  score     Float
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  job  Job  @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, jobId])
+  @@map("recommendations")
+}
