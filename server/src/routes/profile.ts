@@ -147,6 +147,25 @@ router.post(
         // Continue even if AI service is down
       }
 
+      // ATS Analysis
+      let atsReport: any = null;
+      try {
+        const atsFormData = new FormData();
+        atsFormData.append('file', fs.createReadStream(filePath), {
+          filename: req.file.originalname,
+          contentType: req.file.mimetype
+        });
+        const atsResponse = await axios.post(
+          `${AI_SERVICE_URL}/analyze-resume`,
+          atsFormData,
+          { headers: atsFormData.getHeaders() }
+        );
+        atsReport = atsResponse.data;
+      } catch (atsError) {
+        console.error('AI service error (ATS analysis):', atsError);
+        // Continue even if ATS analysis fails
+      }
+
       // Update user record
       const updateData: any = {
         resumePath: fileName
@@ -174,7 +193,8 @@ router.post(
         message: 'Resume uploaded and processed.',
         user,
         extractedSkills: parsedData?.flat_skills || [],
-        skillCategories: parsedData?.skills || {}
+        skillCategories: parsedData?.skills || {},
+        atsReport
       });
     } catch (error) {
       console.error('Resume upload error:', error);
