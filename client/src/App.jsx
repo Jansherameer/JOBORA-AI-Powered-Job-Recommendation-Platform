@@ -7,6 +7,9 @@ import Signup from './pages/Signup';
 import Dashboard from './pages/Dashboard';
 import Profile from './pages/Profile';
 import AdminJobs from './pages/AdminJobs';
+import NotFound from './pages/NotFound';
+import Unauthorized from './pages/Unauthorized';
+import ServerError from './pages/ServerError';
 import { Loader2 } from 'lucide-react';
 import { Toaster } from './components/ui/toaster';
 
@@ -23,7 +26,7 @@ function ProtectedRoute({ children, adminOnly = false }) {
   }
 
   if (!user) return <Navigate to="/login" />;
-  if (adminOnly && user.role !== 'admin') return <Navigate to="/dashboard" />;
+  if (adminOnly && user.role !== 'admin') return <Unauthorized />;
 
   return children;
 }
@@ -53,7 +56,9 @@ function AppRoutes() {
           <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
           <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
           <Route path="/admin" element={<ProtectedRoute adminOnly><AdminJobs /></ProtectedRoute>} />
-          <Route path="*" element={<Navigate to="/dashboard" />} />
+          <Route path="/unauthorized" element={<Unauthorized />} />
+          <Route path="/error" element={<ServerError />} />
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </main>
       <Toaster />
