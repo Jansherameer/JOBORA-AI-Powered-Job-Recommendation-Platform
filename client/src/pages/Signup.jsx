@@ -24,10 +24,10 @@ export default function Signup() {
     try {
       await signup(name, email, password);
       toast({
-        title: "Account Created",
-        description: "Welcome! Your account has been successfully registered.",
+        title: "Account Created!",
+        description: "Please check your email to verify your account before signing in.",
       });
-      navigate('/dashboard');
+      navigate('/login');
     } catch (err) {
       toast({
         variant: "destructive",

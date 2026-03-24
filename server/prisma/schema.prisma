@@ -18,6 +18,10 @@ model User {
   skills          Json?             @default("[]")
   embedding       Float[]           @default([])
   role            String            @default("user")
+  isVerified      Boolean           @default(false) @map("is_verified")
+  verifyToken     String?           @unique @map("verify_token")
+  resetToken      String?           @unique @map("reset_token")
+  resetTokenExp   DateTime?         @map("reset_token_expiry")
   createdAt       DateTime          @default(now()) @map("created_at")
   updatedAt       DateTime          @updatedAt @map("updated_at")
   recommendations Recommendation[]

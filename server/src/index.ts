@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import path from 'path';
+import rateLimit from 'express-rate-limit';
 import authRoutes from './routes/auth';
 import profileRoutes from './routes/profile';
 import jobRoutes from './routes/jobs';
@@ -23,6 +24,29 @@ app.use(express.urlencoded({ extended: true }));
 
 // Serve uploaded files
 app.use('/uploads', express.static(path.resolve('./uploads')));
+
+// Rate Limiting
+const generalLimiter = rateLimit({
+  windowMs: 1 * 60 * 1000,   // 1 minute
+  max: 100,                    // 100 requests per minute
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many requests. Please try again in a minute.' }
+});
+
+const authLimiter = rateLimit({
+  windowMs: 1 * 60 * 1000,   // 1 minute
+  max: 5,                     // 5 auth attempts per minute per IP
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many login attempts. Please wait 1 minute before trying again.' }
+});
+
+// Apply rate limiters
+app.use('/api', generalLimiter);
+app.use('/api/auth/login', authLimiter);
+app.use('/api/auth/signup', authLimiter);
+app.use('/api/auth/forgot-password', authLimiter);
 
 // Routes
 app.use('/api/auth', authRoutes);

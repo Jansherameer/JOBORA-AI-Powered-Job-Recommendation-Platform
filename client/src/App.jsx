@@ -10,6 +10,9 @@ import AdminJobs from './pages/AdminJobs';
 import NotFound from './pages/NotFound';
 import Unauthorized from './pages/Unauthorized';
 import ServerError from './pages/ServerError';
+import VerifyEmail from './pages/VerifyEmail';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
 import { Loader2 } from 'lucide-react';
 import { Toaster } from './components/ui/toaster';
 
@@ -56,6 +59,9 @@ function AppRoutes() {
           <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
           <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
           <Route path="/admin" element={<ProtectedRoute adminOnly><AdminJobs /></ProtectedRoute>} />
+          <Route path="/verify-email" element={<VerifyEmail />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/unauthorized" element={<Unauthorized />} />
           <Route path="/error" element={<ServerError />} />
           <Route path="*" element={<NotFound />} />

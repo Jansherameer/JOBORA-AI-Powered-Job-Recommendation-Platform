@@ -12,6 +12,8 @@ export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [needsVerification, setNeedsVerification] = useState(false);
+  const [unverifiedEmail, setUnverifiedEmail] = useState('');
   const { login } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -28,11 +30,22 @@ export default function Login() {
       });
       navigate('/dashboard');
     } catch (err) {
-      toast({
-        variant: "destructive",
-        title: "Sign In Failed",
-        description: err.response?.data?.error || 'Invalid credentials or connection error.',
-      });
+      const data = err.response?.data;
+      if (data?.needsVerification) {
+        setNeedsVerification(true);
+        setUnverifiedEmail(data.email || email);
+        toast({
+          variant: "destructive",
+          title: "Email Not Verified",
+          description: "Please check your email for the verification link.",
+        });
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Sign In Failed",
+          description: data?.error || 'Invalid credentials or connection error.',
+        });
+      }
     } finally {
       setIsLoading(false);
     }
@@ -85,7 +98,12 @@ export default function Login() {
                 </div>
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-bold text-foreground">Password</label>
+                <div className="flex items-center justify-between">
+                  <label className="text-sm font-bold text-foreground">Password</label>
+                  <Link to="/forgot-password" className="text-xs font-semibold text-primary hover:underline underline-offset-4 transition-colors">
+                    Forgot password?
+                  </Link>
+                </div>
                 <div className="relative">
                   <Lock size={16} className="absolute left-3 top-3 text-muted-foreground" />
                   <Input
@@ -108,6 +126,26 @@ export default function Login() {
                   'Sign In'
                 )}
               </Button>
+
+              {needsVerification && (
+                <div className="p-3 rounded-xl bg-orange-500/10 border border-orange-500/20 text-center">
+                  <p className="text-sm text-orange-700 mb-2">Your email is not verified yet.</p>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      try {
+                        const res = await (await import('../lib/api')).default.post('/auth/resend-verification', { email: unverifiedEmail });
+                        toast({ title: 'Verification Sent', description: 'Check your email for the verification link.' });
+                      } catch (e) {
+                        toast({ variant: 'destructive', title: 'Error', description: 'Could not send verification email.' });
+                      }
+                    }}
+                    className="text-sm font-semibold text-primary hover:underline"
+                  >
+                    Resend verification email
+                  </button>
+                </div>
+              )}
             </form>
           </CardContent>
           <CardFooter className="flex flex-col gap-4">
