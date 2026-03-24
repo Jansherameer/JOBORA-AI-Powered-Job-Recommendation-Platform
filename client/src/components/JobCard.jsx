@@ -3,7 +3,6 @@ import { motion } from 'framer-motion';
 import { MapPin, Building2, ChevronRight, ExternalLink, Briefcase } from 'lucide-react';
 import MatchCircle from './MatchCircle';
 import { Card, CardContent } from './ui/card';
-import { Badge } from './ui/badge';
 import { 
   Dialog, 
   DialogContent, 
@@ -18,13 +17,13 @@ import { Button } from './ui/button';
 export default function JobCard({ job, matchScore, matchedSkills = [], index = 0 }) {
   const [open, setOpen] = useState(false);
 
-  const categoryColors = {
-    'Software Engineering': 'bg-blue-100 text-blue-700 border-blue-200',
-    'Data Science': 'bg-emerald-100 text-emerald-700 border-emerald-200',
-    'DevOps': 'bg-orange-100 text-orange-700 border-orange-200',
-    'Design': 'bg-pink-100 text-pink-700 border-pink-200',
-    'Product Management': 'bg-violet-100 text-violet-700 border-violet-200',
-    'Security': 'bg-red-100 text-red-700 border-red-200',
+  const categoryTagMap = {
+    'Software Engineering': 'primary',
+    'Data Science': 'emerald',
+    'DevOps': 'orange',
+    'Design': 'pink',
+    'Product Management': 'purple',
+    'Security': 'red',
   };
 
   // Helper to strip HTML for card preview
@@ -35,11 +34,15 @@ export default function JobCard({ job, matchScore, matchedSkills = [], index = 0
     return tmp.textContent || tmp.innerText || '';
   };
 
-  const badgeColor = categoryColors[job.category] || 'bg-muted text-muted-foreground border-border';
+  const catVariant = categoryTagMap[job.category] || 'dark';
   const skills = Array.isArray(job.requiredSkills) ? job.requiredSkills : [];
   
   // Use professional applyLink if available, otherwise search fallback
   const applyUrl = job.applyLink || `https://www.google.com/search?q=${encodeURIComponent(job.title + " " + job.company + " careers")}`;
+
+  // Assign rotating tag colors to skills
+  const skillTagVariants = ['primary', 'emerald', 'purple', 'orange', 'pink', 'cyan', 'dark'];
+  const getSkillVariant = (idx) => skillTagVariants[idx % skillTagVariants.length];
 
   return (
     <motion.div
@@ -54,10 +57,10 @@ export default function JobCard({ job, matchScore, matchedSkills = [], index = 0
               <div className="flex items-start justify-between gap-4">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-2">
-                    <Badge variant="outline" className={`font-medium ${badgeColor}`}>
+                    <span className={`label-tag label-tag-${catVariant}`}>
                       {job.category}
-                    </Badge>
-                    <span className="text-[10px] uppercase tracking-wider font-bold text-muted-foreground">
+                    </span>
+                    <span className="label-tag label-tag-dark" style={{ fontSize: '10px' }}>
                       {job.experienceLevel}
                     </span>
                   </div>
@@ -82,22 +85,22 @@ export default function JobCard({ job, matchScore, matchedSkills = [], index = 0
                   </p>
 
                   <div className="mt-4 flex flex-wrap gap-1.5">
-                    {skills.slice(0, 5).map((skill) => {
+                    {skills.slice(0, 5).map((skill, sIdx) => {
                       const isMatched = matchedSkills.some(ms => ms.toLowerCase() === skill.toLowerCase());
                       return (
-                        <Badge 
-                          key={skill} 
-                          variant={isMatched ? "default" : "secondary"}
-                          className={`text-[10px] px-2 py-0 ${isMatched ? "bg-green-600 hover:bg-green-700" : "bg-secondary/50"}`}
+                        <span
+                          key={skill}
+                          className={`label-tag ${isMatched ? 'label-tag-emerald' : `label-tag-${getSkillVariant(sIdx)}`}`}
+                          style={{ fontSize: '11px', padding: '3px 6px' }}
                         >
-                          {skill}
-                        </Badge>
+                          {isMatched && '✓ '}{skill}
+                        </span>
                       );
                     })}
                     {skills.length > 5 && (
-                      <Badge variant="secondary" className="text-[10px] px-2 py-0">
+                      <span className="label-tag label-tag-dark" style={{ fontSize: '11px', padding: '3px 6px' }}>
                         +{skills.length - 5}
-                      </Badge>
+                      </span>
                     )}
                   </div>
                 </div>
@@ -105,7 +108,9 @@ export default function JobCard({ job, matchScore, matchedSkills = [], index = 0
                 {matchScore !== undefined && (
                   <div className="flex flex-col items-center gap-1 shrink-0 pt-1">
                     <MatchCircle score={matchScore} size={56} />
-                    <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">match</span>
+                    <span className="label-tag label-tag-primary" style={{ fontSize: '9px', padding: '1px 4px', letterSpacing: '0.08em' }}>
+                      MATCH
+                    </span>
                   </div>
                 )}
               </div>
@@ -116,13 +121,13 @@ export default function JobCard({ job, matchScore, matchedSkills = [], index = 0
                     <>
                       <div className="flex -space-x-1">
                         {[...Array(Math.min(3, matchedSkills.length))].map((_, i) => (
-                           <div key={i} className="w-5 h-5 rounded-full bg-green-100 border-2 border-background flex items-center justify-center">
-                              <div className="w-1.5 h-1.5 rounded-full bg-green-600" />
+                           <div key={i} className="w-5 h-5 rounded-full bg-emerald-50 border-2 border-background flex items-center justify-center">
+                              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
                            </div>
                         ))}
                       </div>
-                      <span className="text-xs font-semibold text-green-700">
-                        {matchedSkills.length} key skills matched
+                      <span className="label-tag label-tag-emerald" style={{ fontSize: '11px', padding: '2px 6px' }}>
+                        {matchedSkills.length} KEY SKILLS MATCHED
                       </span>
                     </>
                   ) : (
@@ -138,12 +143,12 @@ export default function JobCard({ job, matchScore, matchedSkills = [], index = 0
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <div className="flex items-center gap-2 mb-2">
-              <Badge variant="outline" className={`font-medium ${badgeColor}`}>
+              <span className={`label-tag label-tag-${catVariant}`}>
                 {job.category}
-              </Badge>
-              <Badge variant="secondary" className="bg-muted text-muted-foreground">
+              </span>
+              <span className="label-tag label-tag-dark">
                 {job.experienceLevel}
-              </Badge>
+              </span>
             </div>
             <DialogTitle className="text-2xl font-extrabold">{job.title}</DialogTitle>
             <div className="flex flex-wrap items-center gap-4 mt-2 text-muted-foreground font-medium">
@@ -160,12 +165,12 @@ export default function JobCard({ job, matchScore, matchedSkills = [], index = 0
 
           <div className="space-y-6 py-4">
             {matchScore !== undefined && (
-              <div className="bg-primary/5 rounded-2xl p-4 border border-primary/10 flex items-center gap-4">
+              <div className="bg-primary/[0.03] rounded-2xl p-4 border border-primary/10 flex items-center gap-4">
                 <MatchCircle score={matchScore} size={64} />
                 <div>
                   <h4 className="font-bold text-foreground">AI Match Confidence</h4>
                   <p className="text-sm text-muted-foreground">
-                    You have a <span className="text-primary font-bold">{Math.round(matchScore)}%</span> compatibility score for this position based on your profile skills.
+                    You have a <span className="label-tag label-tag-primary" style={{ fontSize: '12px', padding: '2px 6px' }}>{Math.round(matchScore)}%</span> compatibility score for this position.
                   </p>
                 </div>
               </div>
@@ -185,17 +190,17 @@ export default function JobCard({ job, matchScore, matchedSkills = [], index = 0
             <div className="space-y-3">
               <h4 className="font-bold text-foreground">Required Skills</h4>
               <div className="flex flex-wrap gap-2">
-                {skills.map((skill) => {
+                {skills.map((skill, sIdx) => {
                   const isMatched = matchedSkills.some(ms => ms.toLowerCase() === skill.toLowerCase());
                   return (
-                    <Badge 
-                      key={skill} 
-                      variant={isMatched ? "default" : "secondary"}
-                      className={`px-3 py-1 ${isMatched ? "bg-green-600 hover:bg-green-700" : "bg-muted"}`}
+                    <span
+                      key={skill}
+                      className={`label-tag ${isMatched ? 'label-tag-emerald' : `label-tag-${getSkillVariant(sIdx)}`}`}
+                      style={{ fontSize: '12px' }}
                     >
                       {skill}
-                      {isMatched && <span className="ml-1.5">✓</span>}
-                    </Badge>
+                      {isMatched && <span className="ml-1">✓</span>}
+                    </span>
                   );
                 })}
               </div>
@@ -212,7 +217,7 @@ export default function JobCard({ job, matchScore, matchedSkills = [], index = 0
             </Button>
             <Button 
                 asChild 
-                className="font-bold sm:w-auto w-full shadow-lg"
+                className="font-bold sm:w-auto w-full shadow-lg hover:scale-105 active:scale-95 transition-all"
             >
               <a href={applyUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2">
                 Apply for this Position

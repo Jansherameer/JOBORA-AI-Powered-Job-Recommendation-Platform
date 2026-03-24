@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { motion } from 'framer-motion';
-import { Mail, Lock, User, UserPlus, Loader2, ArrowRight, Briefcase } from 'lucide-react';
+import { Mail, Lock, User, Loader2, ArrowRight, Briefcase, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
@@ -40,46 +40,55 @@ export default function Signup() {
   };
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center px-4 bg-muted/30">
+    <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center px-4 bg-muted/30 relative overflow-hidden">
+      {/* Background accents */}
+      <div className="absolute top-20 -right-20 w-72 h-72 bg-emerald-500/10 rounded-full mix-blend-multiply filter blur-3xl opacity-40 animate-pulse" />
+      <div className="absolute bottom-20 -left-20 w-72 h-72 bg-primary/10 rounded-full mix-blend-multiply filter blur-3xl opacity-40 animate-pulse" style={{ animationDelay: '2s' }} />
+
       <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.3 }}
-        className="w-full max-w-md"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+        className="w-full max-w-md relative z-10"
       >
-        <Card className="border-none shadow-xl bg-background/80 backdrop-blur-sm">
+        <Card className="border-none shadow-2xl bg-background/90 backdrop-blur-sm">
           <CardHeader className="space-y-1 text-center">
-            <div className="flex justify-center mb-6">
-               <div className="w-16 h-16 rounded-2xl bg-primary flex items-center justify-center shadow-lg shadow-primary/20 -rotate-3">
-                  <Briefcase size={32} className="text-primary-foreground" />
-               </div>
+            <div className="flex justify-center mb-4">
+              <div className="w-16 h-16 rounded-2xl bg-primary flex items-center justify-center shadow-lg shadow-primary/25 -rotate-3 hover:rotate-0 transition-transform duration-300">
+                <Briefcase size={32} className="text-primary-foreground" />
+              </div>
             </div>
-            <CardTitle className="text-3xl font-bold tracking-tight">Join Jobora</CardTitle>
-            <CardDescription className="text-base font-medium">
+            <CardTitle className="text-3xl font-extrabold tracking-tight">Join Jobora</CardTitle>
+            <CardDescription className="text-base">
               Start matching with top-tier roles today.
             </CardDescription>
+            <div className="flex justify-center gap-2 pt-2">
+              <span className="label-tag label-tag-emerald" style={{ fontSize: '10px', letterSpacing: '0.12em', fontWeight: 700 }}>
+                <Sparkles size={10} className="inline mr-1 -mt-0.5" />
+                FREE FOREVER
+              </span>
+              <span className="label-tag label-tag-purple" style={{ fontSize: '10px', letterSpacing: '0.12em', fontWeight: 700 }}>
+                NO CREDIT CARD
+              </span>
+            </div>
           </CardHeader>
           <CardContent className="grid gap-4">
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
-                <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                  Full Name
-                </label>
+                <label className="text-sm font-bold text-foreground">Full Name</label>
                 <div className="relative">
                   <User size={16} className="absolute left-3 top-3 text-muted-foreground" />
                   <Input
                     placeholder="John Doe"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    className="pl-10"
+                    className="pl-10 bg-muted/30 border-none shadow-none focus-visible:ring-1"
                     required
                   />
                 </div>
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                  Email
-                </label>
+                <label className="text-sm font-bold text-foreground">Email</label>
                 <div className="relative">
                   <Mail size={16} className="absolute left-3 top-3 text-muted-foreground" />
                   <Input
@@ -87,15 +96,13 @@ export default function Signup() {
                     placeholder="name@example.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="pl-10"
+                    className="pl-10 bg-muted/30 border-none shadow-none focus-visible:ring-1"
                     required
                   />
                 </div>
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                  Password
-                </label>
+                <label className="text-sm font-bold text-foreground">Password</label>
                 <div className="relative">
                   <Lock size={16} className="absolute left-3 top-3 text-muted-foreground" />
                   <Input
@@ -103,13 +110,13 @@ export default function Signup() {
                     placeholder="••••••••"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="pl-10"
+                    className="pl-10 bg-muted/30 border-none shadow-none focus-visible:ring-1"
                     required
                     minLength={6}
                   />
                 </div>
               </div>
-              <Button type="submit" className="w-full" disabled={isLoading}>
+              <Button type="submit" className="w-full h-11 font-bold shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all" disabled={isLoading}>
                 {isLoading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -126,7 +133,7 @@ export default function Signup() {
           <CardFooter>
             <div className="text-center text-sm text-muted-foreground w-full">
               Already have an account?{" "}
-              <Link to="/login" className="underline underline-offset-4 hover:text-primary transition-colors">
+              <Link to="/login" className="font-semibold text-primary hover:underline underline-offset-4 transition-colors">
                 Sign in
               </Link>
             </div>

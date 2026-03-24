@@ -1,15 +1,7 @@
 @import "tailwindcss";
 
-@font-face {
-  font-family: 'JoboraSans';
-  src: url('/font.woff2') format('woff2');
-  font-weight: normal;
-  font-style: normal;
-  font-display: swap;
-}
-
 @theme {
-  --font-sans: 'JoboraSans', 'Inter', system-ui, -apple-system, sans-serif;
+  --font-sans: 'Open Sans', system-ui, -apple-system, sans-serif;
   
   --radius-lg: 0.75rem;
   --radius-md: calc(0.75rem - 2px);
@@ -44,6 +36,8 @@
     background-color: var(--color-background);
     color: var(--color-foreground);
     font-family: var(--font-sans);
+    font-size: 15px;
+    overflow-y: scroll !important;
   }
 }
 
@@ -59,4 +53,115 @@
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+}
+
+/* ========================================
+   Label Tag Buttons — Translucent Badges
+   ======================================== */
+.label-tag {
+  display: inline-block;
+  padding: 5px 10px;
+  border-radius: 3px;
+  margin-bottom: 4px;
+  margin-right: 4px;
+  font-weight: 600;
+  font-size: 13px;
+  line-height: 1;
+  font-family: 'Open Sans', sans-serif;
+  cursor: default;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Primary — Blue */
+.label-tag-primary {
+  background: rgba(64, 154, 225, 0.2);
+  color: #2d7bc4;
+}
+.label-tag-primary:hover {
+  background: rgba(64, 154, 225, 0.4);
+  color: #1a5a99;
+}
+
+/* Emerald — Green */
+.label-tag-emerald {
+  background: rgba(16, 185, 129, 0.2);
+  color: #059669;
+}
+.label-tag-emerald:hover {
+  background: rgba(16, 185, 129, 0.4);
+  color: #047857;
+}
+
+/* Purple */
+.label-tag-purple {
+  background: rgba(139, 92, 246, 0.2);
+  color: #7c3aed;
+}
+.label-tag-purple:hover {
+  background: rgba(139, 92, 246, 0.4);
+  color: #6d28d9;
+}
+
+/* Orange */
+.label-tag-orange {
+  background: rgba(251, 146, 60, 0.2);
+  color: #ea580c;
+}
+.label-tag-orange:hover {
+  background: rgba(251, 146, 60, 0.4);
+  color: #c2410c;
+}
+
+/* Pink / Magenta */
+.label-tag-pink {
+  background: rgba(236, 72, 153, 0.2);
+  color: #db2777;
+}
+.label-tag-pink:hover {
+  background: rgba(236, 72, 153, 0.4);
+  color: #be185d;
+}
+
+/* Red / Destructive */
+.label-tag-red {
+  background: rgba(239, 68, 68, 0.2);
+  color: #dc2626;
+}
+.label-tag-red:hover {
+  background: rgba(239, 68, 68, 0.4);
+  color: #b91c1c;
+}
+
+/* Cyan / Teal */
+.label-tag-cyan {
+  background: rgba(6, 182, 212, 0.2);
+  color: #0891b2;
+}
+.label-tag-cyan:hover {
+  background: rgba(6, 182, 212, 0.4);
+  color: #0e7490;
+}
+
+/* Dark / Neutral */
+.label-tag-dark {
+  background: rgba(51, 65, 85, 0.15);
+  color: #475569;
+}
+.label-tag-dark:hover {
+  background: rgba(51, 65, 85, 0.3);
+  color: #334155;
+}
+
+/* ========================================
+   Marquee Ticker Animation
+   ======================================== */
+@keyframes marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+.animate-marquee {
+  animation: marquee 30s linear infinite;
+}
+.animate-marquee:hover {
+  animation-play-state: paused;
 }

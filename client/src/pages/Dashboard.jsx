@@ -99,205 +99,235 @@ export default function Dashboard() {
   const matchPotential = recommendations.length > 0 ? Math.min(100, (recommendations.length / 10) * 100) : 0;
   const marketSize = totalJobs > 0 ? 100 : 0;
 
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: { opacity: 1, transition: { staggerChildren: 0.1 } },
+  };
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.16, 1, 0.3, 1] } },
+  };
+
   return (
     <div className="bg-muted/30 min-h-[calc(100vh-4rem)]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-end md:justify-between mb-8 gap-4">
-          <motion.div
-            initial={{ opacity: 0, x: -10 }}
-            animate={{ opacity: 1, x: 0 }}
-          >
-            <h1 className="text-3xl font-extrabold tracking-tight text-foreground">
-              Welcome back, <span className="text-primary">{user?.name}</span>
-            </h1>
-            <p className="text-muted-foreground mt-1 font-medium">
-              {hasSkills
-                ? `Personalized opportunities based on your skills`
-                : 'Complete your profile to unlock AI recommendations'}
-            </p>
-          </motion.div>
-          {hasSkills && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={refreshRecommendations}
-              disabled={recLoading}
-              className="bg-background shadow-sm"
-            >
-              <RefreshCw size={14} className={`mr-2 ${recLoading ? 'animate-spin' : ''}`} />
-              Update Matches
-            </Button>
-          )}
-        </div>
+        <motion.div variants={containerVariants} initial="hidden" animate="visible">
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
-          <Card className="border-none shadow-sm overflow-hidden group">
-            <CardContent className="p-0">
-              <div className="flex items-center p-5">
-                <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center mr-4 group-hover:bg-primary/20 transition-colors">
-                  <Layers size={22} className="text-primary" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold">{userSkills.length}</p>
-                  <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Expertise Areas</p>
-                </div>
+          {/* Header */}
+          <motion.div variants={itemVariants} className="flex flex-col md:flex-row md:items-end md:justify-between mb-8 gap-4">
+            <div>
+              <div className="mb-3">
+                <span className="label-tag label-tag-primary" style={{ fontSize: '11px', letterSpacing: '0.12em', fontWeight: 700 }}>
+                  DASHBOARD
+                </span>
               </div>
-              <div className="h-1 bg-primary/20 w-full">
-                <div 
-                  className="h-full bg-primary transition-all duration-1000" 
-                  style={{ width: `${skillStrength}%` }} 
-                />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border-none shadow-sm overflow-hidden group">
-            <CardContent className="p-0">
-              <div className="flex items-center p-5">
-                <div className="w-12 h-12 rounded-2xl bg-green-100 flex items-center justify-center mr-4 group-hover:bg-green-200 transition-colors">
-                  <TrendingUp size={22} className="text-green-700" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold">{recommendations.length}</p>
-                  <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Smart Matches</p>
-                </div>
-              </div>
-              <div className="h-1 bg-green-100 w-full">
-                <div 
-                  className="h-full bg-green-600 transition-all duration-1000" 
-                  style={{ width: `${matchPotential}%` }} 
-                />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border-none shadow-sm overflow-hidden group sm:col-span-2 lg:col-span-1">
-            <CardContent className="p-0">
-              <div className="flex items-center p-5">
-                <div className="w-12 h-12 rounded-2xl bg-secondary flex items-center justify-center mr-4 group-hover:bg-secondary/80 transition-colors">
-                  <Briefcase size={22} className="text-secondary-foreground" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold">{totalJobs}</p>
-                  <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Open Positions</p>
-                </div>
-              </div>
-              <div className="h-1 bg-secondary w-full">
-                <div 
-                  className="h-full bg-secondary-foreground/20 transition-all duration-1000" 
-                  style={{ width: `${marketSize}%` }} 
-                />
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        <Tabs defaultValue="recommended" className="space-y-6">
-          <div className="flex items-center justify-between">
-            <TabsList className="bg-muted/50 p-1 border">
-              <TabsTrigger value="recommended" className="gap-2 rounded-md">
-                <Sparkles size={14} />
-                Recommended
-              </TabsTrigger>
-              <TabsTrigger value="all" className="gap-2 rounded-md">
-                <LayoutGrid size={14} />
-                Marketplace
-              </TabsTrigger>
-            </TabsList>
-          </div>
-
-          <TabsContent value="recommended" className="mt-0 outline-none">
-            {loading ? (
-              <div className="flex flex-col items-center justify-center py-20">
-                <RefreshCw className="h-8 w-8 animate-spin text-primary mb-4" />
-                <p className="text-muted-foreground animate-pulse">Analyzing matches...</p>
-              </div>
-            ) : !hasSkills ? (
-              <Card className="border-dashed bg-background/50 text-center p-12">
-                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-primary/5 flex items-center justify-center">
-                  <Sparkles size={32} className="text-primary/40" />
-                </div>
-                <CardTitle className="mb-2">Find Your Prime Match</CardTitle>
-                <p className="text-muted-foreground max-w-sm mx-auto mb-6">
-                  We need to know your strengths to find the perfect role for you. Add skills or upload a resume.
-                </p>
-                <Button asChild>
-                  <a href="/profile">Enhance Your Profile</a>
-                </Button>
-              </Card>
-            ) : recommendations.length === 0 ? (
-              <Card className="text-center p-12">
-                <p className="text-muted-foreground">No matches found right now. Check back soon!</p>
-              </Card>
-            ) : (
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                {recommendations.map((rec, i) => (
-                  <JobCard
-                    key={rec.job.id}
-                    job={rec.job}
-                    matchScore={rec.matchScore}
-                    matchedSkills={rec.matchedSkills}
-                    index={i}
-                  />
-                ))}
-              </div>
+              <h1 className="text-3xl font-extrabold tracking-tight text-foreground">
+                Welcome back, <span className="gradient-text">{user?.name}</span>
+              </h1>
+              <p className="text-muted-foreground mt-1">
+                {hasSkills
+                  ? 'Personalized opportunities based on your skills'
+                  : 'Complete your profile to unlock AI recommendations'}
+              </p>
+            </div>
+            {hasSkills && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={refreshRecommendations}
+                disabled={recLoading}
+                className="bg-background shadow-sm hover:shadow-md transition-all"
+              >
+                <RefreshCw size={14} className={`mr-2 ${recLoading ? 'animate-spin' : ''}`} />
+                Update Matches
+              </Button>
             )}
-          </TabsContent>
+          </motion.div>
 
-          <TabsContent value="all" className="mt-0 outline-none space-y-6">
-            <Card className="border-none shadow-sm">
-              <CardContent className="p-4 flex flex-wrap gap-4 items-center">
-                <div className="relative flex-1 min-w-[240px]">
-                  <Search size={16} className="absolute left-3 top-3 text-muted-foreground" />
-                  <Input
-                    type="text"
-                    placeholder="Search roles, companies, or keywords..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10 bg-muted/30 border-none shadow-none focus-visible:ring-1"
-                  />
+          {/* Stats Grid */}
+          <motion.div variants={itemVariants} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+            {/* Expertise Areas */}
+            <Card className="border-none shadow-sm overflow-hidden group hover:shadow-md transition-all">
+              <CardContent className="p-0">
+                <div className="flex items-center p-5">
+                  <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center mr-4 group-hover:bg-primary group-hover:text-white transition-all duration-300">
+                    <Layers size={22} className="text-primary group-hover:text-white transition-colors duration-300" />
+                  </div>
+                  <div>
+                    <p className="text-2xl font-extrabold">{userSkills.length}</p>
+                    <span className="label-tag label-tag-primary" style={{ fontSize: '10px', padding: '2px 6px' }}>
+                      EXPERTISE AREAS
+                    </span>
+                  </div>
                 </div>
-                <div className="flex gap-2">
-                  <select
-                    value={selectedCategory}
-                    onChange={(e) => setSelectedCategory(e.target.value)}
-                    className="h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring"
-                  >
-                    <option value="">All Categories</option>
-                    {filters.categories.map(c => <option key={c} value={c}>{c}</option>)}
-                  </select>
-                  <select
-                    value={selectedLevel}
-                    onChange={(e) => setSelectedLevel(e.target.value)}
-                    className="h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring"
-                  >
-                    <option value="">All Levels</option>
-                    {filters.experienceLevels.map(l => <option key={l} value={l}>{l}</option>)}
-                  </select>
+                <div className="h-1 bg-primary/10 w-full">
+                  <div
+                    className="h-full bg-primary transition-all duration-1000"
+                    style={{ width: `${skillStrength}%` }}
+                  />
                 </div>
               </CardContent>
             </Card>
 
-            {loading ? (
-              <div className="flex flex-col items-center justify-center py-20">
-                <RefreshCw className="h-8 w-8 animate-spin text-primary mb-4" />
-                <p className="text-muted-foreground">Loading market data...</p>
+            {/* Smart Matches */}
+            <Card className="border-none shadow-sm overflow-hidden group hover:shadow-md transition-all">
+              <CardContent className="p-0">
+                <div className="flex items-center p-5">
+                  <div className="w-12 h-12 rounded-2xl bg-emerald-50 flex items-center justify-center mr-4 group-hover:bg-emerald-500 transition-all duration-300">
+                    <TrendingUp size={22} className="text-emerald-600 group-hover:text-white transition-colors duration-300" />
+                  </div>
+                  <div>
+                    <p className="text-2xl font-extrabold">{recommendations.length}</p>
+                    <span className="label-tag label-tag-emerald" style={{ fontSize: '10px', padding: '2px 6px' }}>
+                      SMART MATCHES
+                    </span>
+                  </div>
+                </div>
+                <div className="h-1 bg-emerald-50 w-full">
+                  <div
+                    className="h-full bg-emerald-500 transition-all duration-1000"
+                    style={{ width: `${matchPotential}%` }}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Open Positions */}
+            <Card className="border-none shadow-sm overflow-hidden group hover:shadow-md transition-all sm:col-span-2 lg:col-span-1">
+              <CardContent className="p-0">
+                <div className="flex items-center p-5">
+                  <div className="w-12 h-12 rounded-2xl bg-purple-50 flex items-center justify-center mr-4 group-hover:bg-purple-500 transition-all duration-300">
+                    <Briefcase size={22} className="text-purple-600 group-hover:text-white transition-colors duration-300" />
+                  </div>
+                  <div>
+                    <p className="text-2xl font-extrabold">{totalJobs}</p>
+                    <span className="label-tag label-tag-purple" style={{ fontSize: '10px', padding: '2px 6px' }}>
+                      OPEN POSITIONS
+                    </span>
+                  </div>
+                </div>
+                <div className="h-1 bg-purple-50 w-full">
+                  <div
+                    className="h-full bg-purple-500 transition-all duration-1000"
+                    style={{ width: `${marketSize}%` }}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+
+          {/* Tabs */}
+          <motion.div variants={itemVariants}>
+            <Tabs defaultValue="recommended" className="space-y-6">
+              <div className="flex items-center justify-between">
+                <TabsList className="bg-muted/50 p-1 border">
+                  <TabsTrigger value="recommended" className="gap-2 rounded-md">
+                    <Sparkles size={14} />
+                    Recommended
+                  </TabsTrigger>
+                  <TabsTrigger value="all" className="gap-2 rounded-md">
+                    <LayoutGrid size={14} />
+                    Marketplace
+                  </TabsTrigger>
+                </TabsList>
               </div>
-            ) : filteredJobs.length === 0 ? (
-              <Card className="text-center p-12">
-                <p className="text-muted-foreground">No jobs match your search criteria.</p>
-              </Card>
-            ) : (
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                {filteredJobs.map((job, i) => (
-                  <JobCard key={job.id} job={job} index={i} />
-                ))}
-              </div>
-            )}
-          </TabsContent>
-        </Tabs>
+
+              <TabsContent value="recommended" className="mt-0 outline-none">
+                {loading ? (
+                  <div className="flex flex-col items-center justify-center py-20">
+                    <RefreshCw className="h-8 w-8 animate-spin text-primary mb-4" />
+                    <p className="text-muted-foreground animate-pulse">Analyzing matches...</p>
+                  </div>
+                ) : !hasSkills ? (
+                  <Card className="border-dashed bg-background/50 text-center p-12">
+                    <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-primary/5 flex items-center justify-center">
+                      <Sparkles size={32} className="text-primary/40" />
+                    </div>
+                    <CardTitle className="mb-3">Find Your Prime Match</CardTitle>
+                    <p className="text-muted-foreground max-w-sm mx-auto mb-6">
+                      We need to know your strengths to find the perfect role for you. Add skills or upload a resume.
+                    </p>
+                    <Button asChild className="shadow-lg">
+                      <a href="/profile">
+                        <Sparkles size={16} className="mr-2" />
+                        Enhance Your Profile
+                      </a>
+                    </Button>
+                  </Card>
+                ) : recommendations.length === 0 ? (
+                  <Card className="text-center p-12">
+                    <p className="text-muted-foreground">No matches found right now. Check back soon!</p>
+                  </Card>
+                ) : (
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    {recommendations.map((rec, i) => (
+                      <JobCard
+                        key={rec.job.id}
+                        job={rec.job}
+                        matchScore={rec.matchScore}
+                        matchedSkills={rec.matchedSkills}
+                        index={i}
+                      />
+                    ))}
+                  </div>
+                )}
+              </TabsContent>
+
+              <TabsContent value="all" className="mt-0 outline-none space-y-6">
+                <Card className="border-none shadow-sm">
+                  <CardContent className="p-4 flex flex-wrap gap-4 items-center">
+                    <div className="relative flex-1 min-w-[240px]">
+                      <Search size={16} className="absolute left-3 top-3 text-muted-foreground" />
+                      <Input
+                        type="text"
+                        placeholder="Search roles, companies, or keywords..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="pl-10 bg-muted/30 border-none shadow-none focus-visible:ring-1"
+                      />
+                    </div>
+                    <div className="flex gap-2">
+                      <select
+                        value={selectedCategory}
+                        onChange={(e) => setSelectedCategory(e.target.value)}
+                        className="h-10 rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring transition-all"
+                      >
+                        <option value="">All Categories</option>
+                        {filters.categories.map(c => <option key={c} value={c}>{c}</option>)}
+                      </select>
+                      <select
+                        value={selectedLevel}
+                        onChange={(e) => setSelectedLevel(e.target.value)}
+                        className="h-10 rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring transition-all"
+                      >
+                        <option value="">All Levels</option>
+                        {filters.experienceLevels.map(l => <option key={l} value={l}>{l}</option>)}
+                      </select>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {loading ? (
+                  <div className="flex flex-col items-center justify-center py-20">
+                    <RefreshCw className="h-8 w-8 animate-spin text-primary mb-4" />
+                    <p className="text-muted-foreground">Loading market data...</p>
+                  </div>
+                ) : filteredJobs.length === 0 ? (
+                  <Card className="text-center p-12">
+                    <p className="text-muted-foreground">No jobs match your search criteria.</p>
+                  </Card>
+                ) : (
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    {filteredJobs.map((job, i) => (
+                      <JobCard key={job.id} job={job} index={i} />
+                    ))}
+                  </div>
+                )}
+              </TabsContent>
+            </Tabs>
+          </motion.div>
+
+        </motion.div>
       </div>
     </div>
   );
