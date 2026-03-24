@@ -203,4 +203,32 @@ router.post(
   }
 );
 
+// GET /api/profile/admin/users
+router.get('/admin/users', authMiddleware, async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const requestUser = await prisma.user.findUnique({ where: { id: req.userId } });
+    if (!requestUser || requestUser.role !== 'admin') {
+      res.status(403).json({ error: 'Forbidden. Admin access required.' });
+      return;
+    }
+
+    const users = await prisma.user.findMany({
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        isVerified: true,
+        createdAt: true,
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+
+    res.json({ users });
+  } catch (error) {
+    console.error('Admin fetch users error:', error);
+    res.status(500).json({ error: 'Internal server error.' });
+  }
+});
+
 export default router;

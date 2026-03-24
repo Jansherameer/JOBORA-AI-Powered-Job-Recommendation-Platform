@@ -1,0 +1,49 @@
+name: Deploy to DigitalOcean
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Execute Deployment Commands via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.DROPLET_HOST }}
+          username: root
+          # We use SSH key authentication
+          key: ${{ secrets.DROPLET_SSH_KEY }}
+          script: |
+            echo "🚀 Starting Automatic Deployment..."
+            
+            # Go to the project directory
+            cd /var/www/JOBORA-AI-Powered-Job-Recommendation-Platform
+            
+            # Pull latest changes from GitHub
+            git pull origin main
+
+            # Update AI Service
+            echo "🧠 Updating AI Service..."
+            cd ai-service
+            source venv/bin/activate
+            pip install -r requirements.txt
+            pm2 restart ai-service
+
+            # Update Backend Server
+            echo "⚙️ Updating Backend Server..."
+            cd ../server
+            npm install
+            npx prisma db push
+            npm run build
+            pm2 restart backend
+
+            # Update Frontend Client
+            echo "🖥️ Updating Frontend..."
+            cd ../client
+            npm install
+            npm run build
+
+            echo "✅ Deployment completely finished! 🎉"

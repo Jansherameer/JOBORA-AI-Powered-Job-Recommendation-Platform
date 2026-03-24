@@ -27,7 +27,10 @@ export default function Navbar() {
   const navLinks = [
     { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { path: '/profile', label: 'Profile', icon: User },
-    ...(user?.role === 'admin' ? [{ path: '/admin', label: 'Admin', icon: Shield }] : [])
+    ...(user?.role === 'admin' ? [
+      { path: '/admin', label: 'Manage Jobs', icon: Briefcase },
+      { path: '/admin/users', label: 'Manage Users', icon: Shield }
+    ] : [])
   ];
 
   return (
