@@ -182,4 +182,21 @@ router.delete(
   }
 );
 
+// POST /api/jobs/admin/sync — Admin: manual sync premium jobs
+router.post(
+  '/admin/sync',
+  authMiddleware,
+  adminMiddleware,
+  async (_req: AuthRequest, res: Response): Promise<void> => {
+    try {
+      const { RSSService } = await import('../services/rssService');
+      const count = await RSSService.fetchAndSyncJobs();
+      res.json({ message: `Successfully synced ${count} new premium jobs.` });
+    } catch (error) {
+      console.error('Manual sync error:', error);
+      res.status(500).json({ error: 'Internal server error during sync.' });
+    }
+  }
+);
+
 export default router;

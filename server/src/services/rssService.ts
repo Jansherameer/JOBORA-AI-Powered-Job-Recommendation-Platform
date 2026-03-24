@@ -4,7 +4,6 @@ import axios from 'axios';
 
 const prisma = new PrismaClient();
 
-// Configure parser with custom fields for Jobicy
 const parser = new Parser({
   customFields: {
     item: [
@@ -16,89 +15,135 @@ const parser = new Parser({
 });
 
 export class RSSService {
-  private static RSS_FEED_URL = process.env.RSS_FEED_URL || 'https://jobicy.com/feed/job_feed';
-
   static async fetchAndSyncJobs() {
-    console.log(`Starting RSS job sync from: ${this.RSS_FEED_URL}`);
+    console.log('Starting premium job sync from multiple sources...');
+    let allJobs: any[] = [];
+    
+    // 1. Fetch Remotive API (Software Dev jobs)
     try {
-      const feed = await parser.parseURL(this.RSS_FEED_URL);
-      console.log(`Fetched ${feed.items.length} jobs from RSS.`);
+      const remotiveRes = await axios.get('https://remotive.com/api/remote-jobs?category=software-dev&limit=15');
+      if (remotiveRes.data && remotiveRes.data.jobs) {
+        const jobs = remotiveRes.data.jobs.slice(0, 15).map((job: any) => ({
+          title: job.title || 'Software Engineer',
+          company: job.company_name || 'Tech Company',
+          description: job.description || 'Remote Software Engineering Role',
+          location: job.candidate_required_location || 'Remote',
+          category: 'Software Engineering',
+          externalId: `remotive-${job.id}`,
+          applyLink: job.url,
+          deadline: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) // 30 days
+        }));
+        allJobs = [...allJobs, ...jobs];
+        console.log(`Fetched ${jobs.length} jobs from Remotive API.`);
+      }
+    } catch (err) {
+      console.error('Failed to fetch from Remotive API:', err);
+    }
 
-      let newCount = 0;
-      for (const item of feed.items) {
-        const externalId = item.guid || item.link;
-        if (!externalId) continue;
+    // 2. Fetch WeWorkRemotely RSS
+    try {
+      const wwrFeed = await parser.parseURL('https://weworkremotely.com/categories/remote-back-end-programming-jobs.rss');
+      const wwrJobs = wwrFeed.items.slice(0, 15).map((item: any) => ({
+        // WWR title format is usually "Company: Job Title"
+        title: item.title?.includes(': ') ? item.title.split(': ')[1] : item.title || 'Backend Engineer',
+        company: item.title?.includes(': ') ? item.title.split(': ')[0] : 'WWR Partner',
+        description: item.content || item.contentSnippet || '',
+        location: 'Remote',
+        category: 'Software Engineering',
+        externalId: item.guid || item.link,
+        applyLink: item.link,
+        deadline: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+      }));
+      allJobs = [...allJobs, ...wwrJobs];
+      console.log(`Fetched ${wwrJobs.length} jobs from WeWorkRemotely RSS.`);
+    } catch (err) {
+      console.error('Failed to fetch from WeWorkRemotely RSS:', err);
+    }
+    
+    // 3. Fetch Jobicy RSS (Original Source)
+    try {
+      const jobicyUrl = process.env.RSS_FEED_URL || 'https://jobicy.com/feed/job_feed';
+      const jobicyFeed = await parser.parseURL(jobicyUrl);
+      const jobicyJobs = jobicyFeed.items.slice(0, 15).map((item: any) => {
+        const category = Array.isArray(item.categories) ? item.categories[0] : item.categories?.[0] || 'Remote';
+        return {
+          title: item.title || 'Untitled Role',
+          company: item.company || item.author || 'Jobicy Partner',
+          description: item['content:encoded'] || item.content || item.contentSnippet || '',
+          location: item.jobLocation || 'Remote',
+          category: category,
+          externalId: item.guid || item.link,
+          applyLink: item.link,
+          deadline: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+        };
+      });
+      allJobs = [...allJobs, ...jobicyJobs];
+      console.log(`Fetched ${jobicyJobs.length} jobs from Jobicy RSS.`);
+    } catch (err) {
+      console.error('Failed to fetch from Jobicy RSS:', err);
+    }
 
-        // Check if job already exists
-        const existingJob = await prisma.job.findUnique({
-          where: { externalId }
-        });
+    console.log(`Aggregated ${allJobs.length} potential jobs. Syncing to database...`);
+    let newCount = 0;
 
-        if (existingJob) continue;
+    for (const jobData of allJobs) {
+      if (!jobData.externalId || !jobData.title) continue;
 
-        // Map categories to a string
-        const category = Array.isArray(item.categories) ? item.categories[0] : (item as any).categories?.[0] || 'Remote';
+      const existingJob = await prisma.job.findUnique({
+        where: { externalId: jobData.externalId }
+      });
+
+      if (existingJob) continue;
+
+      const job = await prisma.job.create({
+        data: {
+          title: jobData.title,
+          company: jobData.company,
+          description: jobData.description,
+          location: jobData.location,
+          category: jobData.category,
+          experienceLevel: 'Mid-Level',
+          requiredSkills: [],
+          externalId: jobData.externalId,
+          applyLink: jobData.applyLink,
+          deadline: jobData.deadline
+        }
+      });
+      newCount++;
+
+      // Process AI Metadata (Skills & Embedding)
+      try {
+        const AI_SERVICE_URL = process.env.AI_SERVICE_URL || 'http://localhost:8000';
         
-        // Clean description (remove HTML if necessary, but we'll keep it for rich display)
-        const description = (item as any)['content:encoded'] || item.content || item.contentSnippet || '';
+        // Use regex skill extractor in Python
+        const skillsRes = await axios.post(`${AI_SERVICE_URL}/extract-skills`, {
+          // Truncate description slightly for performance if it's massive HTML
+          text: `${job.title}. ${job.description.slice(0, 2000)}` 
+        });
+        const extractedSkills = skillsRes.data.flat_skills || [];
 
-        // Create new job
-        const job = await prisma.job.create({
+        const skillsText = extractedSkills.join(', ');
+        const textForEmbedding = `${job.title}. Required skills: ${skillsText}`;
+        
+        const embedRes = await axios.post(`${AI_SERVICE_URL}/generate-embedding`, {
+          text: textForEmbedding
+        });
+        
+        await prisma.job.update({
+          where: { id: job.id },
           data: {
-            title: item.title || 'Untitled Role',
-            company: (item as any).company || (item as any).author || 'Jobicy Partner',
-            description,
-            location: (item as any).jobLocation || 'Remote',
-            category: category || 'Software Engineering',
-            experienceLevel: 'Mid-Level', // Default
-            requiredSkills: [],
-            externalId,
-            applyLink: item.link,
-            deadline: item.isoDate ? new Date(new Date(item.isoDate).getTime() + 30 * 24 * 60 * 60 * 1000) : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+            requiredSkills: extractedSkills,
+            embedding: embedRes.data.embedding
           }
         });
 
-        newCount++;
-
-        // Process AI metadata (Skills & Embedding)
-        try {
-          const AI_SERVICE_URL = process.env.AI_SERVICE_URL || 'http://localhost:8000';
-          
-          // 1. Extract Skills
-          const skillsRes = await axios.post(`${AI_SERVICE_URL}/extract-skills`, {
-            text: `${job.title}. ${job.description}`
-          });
-          const extractedSkills = skillsRes.data.flat_skills || [];
-
-          // 2. Generate Embedding
-          // Match the logic in jobs.ts for consistency
-          const skillsText = extractedSkills.join(', ');
-          const textForEmbedding = `${job.title}. ${job.description}. Required skills: ${skillsText}`;
-          
-          const embedRes = await axios.post(`${AI_SERVICE_URL}/generate-embedding`, {
-            text: textForEmbedding
-          });
-          
-          // 3. Update Job
-          await prisma.job.update({
-            where: { id: job.id },
-            data: {
-              requiredSkills: extractedSkills,
-              embedding: embedRes.data.embedding
-            }
-          });
-
-        } catch (aiError) {
-          console.error(`AI processing failed for job ${job.id}:`, aiError);
-        }
+      } catch (aiError) {
+        console.error(`AI processing failed for job ${job.id}:`, aiError);
       }
-
-      console.log(`RSS job sync completed. Added ${newCount} new jobs.`);
-      return newCount;
-    } catch (error) {
-      console.error('Error during RSS job sync:', error);
-      throw error;
     }
+
+    console.log(`Sync complete! Added ${newCount} new premium jobs.`);
+    return newCount;
   }
 
   static async cleanupExpiredJobs() {

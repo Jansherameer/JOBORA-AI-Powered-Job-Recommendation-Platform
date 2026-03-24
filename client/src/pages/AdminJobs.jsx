@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import api from '../lib/api';
-import { Shield, Plus, Trash2, Briefcase, Loader2, MapPin, Building2 } from 'lucide-react';
+import { Shield, Plus, Trash2, Briefcase, Loader2, MapPin, Building2, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -39,6 +39,7 @@ export default function AdminJobs() {
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
   const [form, setForm] = useState({
     title: '', company: '', description: '', location: '',
     category: 'Software Engineering', experienceLevel: 'Mid-Level',
@@ -105,6 +106,26 @@ export default function AdminJobs() {
     }
   };
 
+  const handleSync = async () => {
+    setIsSyncing(true);
+    try {
+      const res = await api.post('/jobs/admin/sync');
+      toast({
+        title: "Synchronization Complete",
+        description: res.data.message || 'Jobs successfully pulled from premium feeds.',
+      });
+      fetchJobs();
+    } catch (err) {
+      toast({
+        variant: "destructive",
+        title: "Sync Failed",
+        description: "Could not synchronize premium jobs."
+      });
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
   const handleDelete = async (id) => {
     try {
       await api.delete(`/jobs/admin/${id}`);
@@ -148,20 +169,40 @@ export default function AdminJobs() {
               <h1 className="text-3xl font-extrabold tracking-tight text-foreground">Admin Command Center</h1>
               <p className="text-muted-foreground mt-1">Maintaining the professional opportunities marketplace</p>
             </div>
-            <Button
-              onClick={() => setShowForm(!showForm)}
-              className="shadow-lg h-11 px-6 font-bold hover:scale-105 active:scale-95 transition-all"
-              variant={showForm ? "outline" : "default"}
-            >
-              {showForm ? (
-                <>Cancel Operation</>
-              ) : (
-                <>
-                  <Plus size={18} className="mr-2" />
-                  Post New Opportunity
-                </>
-              )}
-            </Button>
+            <div className="flex gap-3">
+              <Button
+                onClick={handleSync}
+                disabled={isSyncing}
+                variant="outline"
+                className="shadow-lg h-11 px-6 font-bold hover:scale-105 active:scale-95 transition-all text-emerald-600 border-emerald-200 hover:bg-emerald-50 dark:hover:bg-emerald-950/30"
+              >
+                {isSyncing ? (
+                  <>
+                    <Loader2 size={18} className="mr-2 animate-spin" />
+                    Syncing Feeds...
+                  </>
+                ) : (
+                  <>
+                    <RefreshCw size={18} className="mr-2" />
+                    Sync Premium Feeds
+                  </>
+                )}
+              </Button>
+              <Button
+                onClick={() => setShowForm(!showForm)}
+                className="shadow-lg h-11 px-6 font-bold hover:scale-105 active:scale-95 transition-all"
+                variant={showForm ? "secondary" : "default"}
+              >
+                {showForm ? (
+                  <>Cancel Operation</>
+                ) : (
+                  <>
+                    <Plus size={18} className="mr-2" />
+                    Post New Opportunity
+                  </>
+                )}
+              </Button>
+            </div>
           </motion.div>
 
           {/* Add Job Form */}
