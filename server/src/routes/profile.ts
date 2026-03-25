@@ -4,7 +4,9 @@ import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
 import axios from 'axios';
+import jwt from 'jsonwebtoken';
 import { AuthRequest, authMiddleware } from '../middleware/auth';
+import { addClient, broadcastActivity } from '../services/activityStream';
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -104,6 +106,8 @@ router.put('/', authMiddleware, async (req: AuthRequest, res: Response): Promise
       }
     });
 
+    broadcastActivity(`${user.name || 'A user'} updated their profile.`, 'profile_update');
+
     res.json({ message: 'Profile updated.', user });
   } catch (error) {
     console.error('Profile update error:', error);
@@ -188,6 +192,8 @@ router.post(
           resumePath: true
         }
       });
+
+      broadcastActivity(`${user.name || 'A user'} uploaded a new resume.`, 'profile_update');
 
       res.json({
         message: 'Resume uploaded and processed.',
@@ -303,6 +309,40 @@ router.get('/admin/analytics', authMiddleware, async (req: AuthRequest, res: Res
   } catch (error) {
     console.error('Admin analytics error:', error);
     res.status(500).json({ error: 'Internal server error.' });
+  }
+});
+
+// GET /api/profile/admin/live-activity (SSE)
+router.get('/admin/live-activity', (req: any, res: Response) => {
+  try {
+    const token = req.query.token as string;
+    if (!token) {
+      res.status(401).json({ error: 'Token required' });
+      return;
+    }
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-super-secret-jwt-key') as any;
+    if (decoded.role !== 'admin') {
+      res.status(403).json({ error: 'Forbidden' });
+      return;
+    }
+
+    // Set headers for Server-Sent Events
+    res.writeHead(200, {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache',
+      'Connection': 'keep-alive'
+    });
+    res.flushHeaders();
+
+    // Register connected client
+    addClient(res);
+
+  } catch (err) {
+    console.error('SSE auth error:', err);
+    if (!res.headersSent) {
+      res.status(401).json({ error: 'Unauthorized' });
+    }
   }
 });
 

@@ -7,6 +7,7 @@ import { useToast } from '@/hooks/use-toast';
 import {
   LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from 'recharts';
+import LiveActivityFeed from '../components/LiveActivityFeed';
 
 export default function AdminAnalytics() {
   const { toast } = useToast();
@@ -159,6 +160,11 @@ export default function AdminAnalytics() {
               </Card>
             </motion.div>
           </div>
+
+          {/* Live Activity Feed Row */}
+          <motion.div variants={itemVariants} className="mt-6">
+            <LiveActivityFeed />
+          </motion.div>
 
         </motion.div>
       </div>

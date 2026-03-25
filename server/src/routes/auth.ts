@@ -5,6 +5,7 @@ import { PrismaClient } from '@prisma/client';
 import { generateToken } from '../middleware/auth';
 import { AuthRequest, authMiddleware } from '../middleware/auth';
 import { sendVerificationEmail, sendPasswordResetEmail } from '../services/email';
+import { broadcastActivity } from '../services/activityStream';
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -55,6 +56,8 @@ router.post('/signup', async (req: Request, res: Response): Promise<void> => {
     }
 
     const token = generateToken(user.id, user.role);
+
+    broadcastActivity(`New user signed up: ${user.name}`, 'signup');
 
     res.status(201).json({
       message: 'Account created. Please check your email to verify your account.',

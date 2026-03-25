@@ -1,6 +1,6 @@
+import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
-import dotenv from 'dotenv';
 import path from 'path';
 import rateLimit from 'express-rate-limit';
 import authRoutes from './routes/auth';
@@ -8,8 +8,6 @@ import profileRoutes from './routes/profile';
 import jobRoutes from './routes/jobs';
 import recommendRoutes from './routes/recommend';
 import { initScheduler } from './services/scheduler';
-
-dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3001;
