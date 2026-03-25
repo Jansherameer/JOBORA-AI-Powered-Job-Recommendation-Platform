@@ -1,6 +1,6 @@
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Briefcase, User, LogOut, Shield, LayoutDashboard, Menu, X } from 'lucide-react';
+import { Briefcase, User, LogOut, Shield, LayoutDashboard, Menu, X, BarChart3 } from 'lucide-react';
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
@@ -29,7 +29,8 @@ export default function Navbar() {
     { path: '/profile', label: 'Profile', icon: User },
     ...(user?.role === 'admin' ? [
       { path: '/admin', label: 'Manage Jobs', icon: Briefcase },
-      { path: '/admin/users', label: 'Manage Users', icon: Shield }
+      { path: '/admin/users', label: 'Manage Users', icon: Shield },
+      { path: '/admin/analytics', label: 'Analytics', icon: BarChart3 }
     ] : [])
   ];
 

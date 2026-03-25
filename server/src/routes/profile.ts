@@ -231,4 +231,79 @@ router.get('/admin/users', authMiddleware, async (req: AuthRequest, res: Respons
   }
 });
 
+// GET /api/profile/admin/analytics
+router.get('/admin/analytics', authMiddleware, async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const requestUser = await prisma.user.findUnique({ where: { id: req.userId } });
+    if (!requestUser || requestUser.role !== 'admin') {
+      res.status(403).json({ error: 'Forbidden. Admin access required.' });
+      return;
+    }
+
+    // 1. Overview Stats
+    const totalUsers = await prisma.user.count();
+    const totalJobs = await prisma.job.count();
+    const totalRecommendations = await prisma.recommendation.count();
+
+    // 2. User Growth (last 30 days)
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+    const recentUsers = await prisma.user.findMany({
+      where: { createdAt: { gte: thirtyDaysAgo } },
+      select: { createdAt: true },
+      orderBy: { createdAt: 'asc' }
+    });
+
+    // Group by date (YYYY-MM-DD)
+    const growthMap: Record<string, number> = {};
+    recentUsers.forEach(u => {
+      const dateStr = u.createdAt.toISOString().split('T')[0];
+      growthMap[dateStr] = (growthMap[dateStr] || 0) + 1;
+    });
+
+    // Convert to array format for Recharts
+    const userGrowth = Object.entries(growthMap).map(([date, count]) => ({
+      date,
+      count
+    }));
+
+    // 3. Top Skills
+    const usersWithSkills = await prisma.user.findMany({
+      select: { skills: true }
+    });
+
+    const skillCounts: Record<string, number> = {};
+    usersWithSkills.forEach(u => {
+      const skills = u.skills as string[];
+      if (Array.isArray(skills)) {
+        skills.forEach(skill => {
+          // Normalize skill name (lowercase, trim)
+          const normalized = skill.trim().toLowerCase();
+          if (normalized) {
+            skillCounts[normalized] = (skillCounts[normalized] || 0) + 1;
+          }
+        });
+      }
+    });
+
+    const topSkills = Object.entries(skillCounts)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 10)
+      .map(([name, count]) => ({
+        name: name.charAt(0).toUpperCase() + name.slice(1), // Capitalize first letter
+        count
+      }));
+
+    res.json({
+      overview: { totalUsers, totalJobs, totalRecommendations },
+      userGrowth,
+      topSkills
+    });
+  } catch (error) {
+    console.error('Admin analytics error:', error);
+    res.status(500).json({ error: 'Internal server error.' });
+  }
+});
+
 export default router;
