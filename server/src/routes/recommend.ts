@@ -121,4 +121,73 @@ router.get('/', authMiddleware, async (req: AuthRequest, res: Response): Promise
   }
 });
 
+// GET /api/recommend/cover-letter-guide/:jobId
+router.get('/cover-letter-guide/:jobId', authMiddleware, async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const jobIdParam = req.params.jobId as string;
+    const jobId = parseInt(jobIdParam, 10);
+    if (isNaN(jobId)) {
+      res.status(400).json({ error: 'Invalid job ID' });
+      return;
+    }
+
+    // Get User Skills
+    const user = await prisma.user.findUnique({
+      where: { id: req.userId },
+      select: { skills: true }
+    });
+
+    if (!user) {
+      res.status(404).json({ error: 'User not found' });
+      return;
+    }
+
+    // Get Job Details
+    const job = await prisma.job.findUnique({
+      where: { id: jobId },
+      select: { title: true, company: true, requiredSkills: true }
+    });
+
+    if (!job) {
+      res.status(404).json({ error: 'Job not found' });
+      return;
+    }
+
+    const userSkills = (Array.isArray(user.skills) ? user.skills : []) as string[];
+    const jobSkills = (Array.isArray(job.requiredSkills) ? job.requiredSkills : []) as string[];
+
+    const matchedSkills = jobSkills.filter(js => 
+      userSkills.some(us => us.toLowerCase() === js.toLowerCase())
+    );
+    const missingSkills = jobSkills.filter(js => 
+      !userSkills.some(us => us.toLowerCase() === js.toLowerCase())
+    );
+
+    const prompt = `Act as an expert career coach and cover letter writer.
+I am applying for the ${job.title} position at ${job.company}.
+Please write a compelling, professional cover letter for me highlighting my strengths.
+
+Here are my relevant skills that match the job requirements:
+${matchedSkills.length > 0 ? matchedSkills.map(s => '- ' + s).join('\n') : '- I am a fast learner with transferable skills.'}
+
+${missingSkills.length > 0 ? `Here are some job requirements I am currently working on. Please brilliantly frame my adaptability and eagerness to learn these skills:\n${missingSkills.slice(0, 5).map(s => '- ' + s).join('\n')}` : ''}
+
+Keep the tone confident, concise, and focused on the value I can bring to ${job.company}.`;
+
+    res.json({
+      prompt,
+      matchedSkills,
+      missingSkills,
+      jobDetails: {
+        title: job.title,
+        company: job.company
+      }
+    });
+
+  } catch (error) {
+    console.error('Cover letter guide error:', error);
+    res.status(500).json({ error: 'Internal server error.' });
+  }
+});
+
 export default router;
