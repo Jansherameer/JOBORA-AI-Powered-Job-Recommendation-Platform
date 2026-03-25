@@ -14,6 +14,7 @@ import {
 } from './ui/dialog';
 import { Button } from './ui/button';
 import CoverLetterGuide from './CoverLetterGuide';
+import MockInterviewGuide from './MockInterviewGuide';
 
 export default function JobCard({ job, matchScore, matchedSkills = [], index = 0 }) {
   const [open, setOpen] = useState(false);
@@ -208,6 +209,7 @@ export default function JobCard({ job, matchScore, matchedSkills = [], index = 0
             </div>
             
             <CoverLetterGuide jobId={job.id} />
+            <MockInterviewGuide jobId={job.id} />
           </div>
 
           <DialogFooter className="flex-col sm:flex-row gap-3 pt-6 border-t">

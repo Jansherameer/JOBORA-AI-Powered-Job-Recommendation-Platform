@@ -43,7 +43,7 @@ jobs:
             # Update Frontend Client
             echo "🖥️ Updating Frontend..."
             cd ../client
-            npm install
+            npm install --legacy-peer-deps
             npm run build
 
             echo "✅ Deployment completely finished! 🎉"
