@@ -256,4 +256,78 @@ Keep it highly professional and actionable!`;
   }
 });
 
+// POST /api/recommend/employer/find-candidates
+router.post('/employer/find-candidates', authMiddleware, async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const { query } = req.body;
+    if (!query) {
+      res.status(400).json({ error: 'Search query is required' });
+      return;
+    }
+
+    if (req.userRole !== 'employer' && req.userRole !== 'admin') {
+      res.status(403).json({ error: 'Employer or Admin access required' });
+      return;
+    }
+
+    // 1. Generate embedding for Employer query
+    const embedRes = await axios.post(`${AI_SERVICE_URL}/generate-embedding`, { text: query });
+    const queryEmbedding = embedRes.data.embedding;
+
+    // 2. Fetch active job seekers
+    const users = await prisma.user.findMany({
+      where: { role: 'user' }
+    });
+
+    // Filter users that actually have a parsed resume embedding
+    const validUsers = users.filter(u => Array.isArray(u.embedding) && u.embedding.length > 0);
+
+    if (validUsers.length === 0) {
+      res.json({ candidates: [] });
+      return;
+    }
+
+    // 3. Send to Python recommendation engine (disguising users as jobs)
+    const candidateData = validUsers.map(u => ({ id: u.id, embedding: u.embedding }));
+
+    const aiRes = await axios.post(`${AI_SERVICE_URL}/recommend`, {
+      user_embedding: queryEmbedding,
+      jobs: candidateData,
+      top_n: 5
+    });
+
+    const recommendations = aiRes.data.recommendations || [];
+
+    // 4. Hydrate candidates with full data and generate the outreach prompt
+    const enhancedCandidates = recommendations.map((rec: any) => {
+      const user = validUsers.find(u => u.id === rec.id);
+      
+      const missingPrompt = `Act as an expert technical recruiter hiring for this specific project or issue:
+"${query}"
+
+I found a candidate named ${user?.name} (Email: ${user?.email}).
+Here is a summary of their exact tracked skills from their resume:
+${(user?.skills as string[])?.join(', ')}
+
+Please draft a highly personalized, compelling, and professional cold-outreach email to this candidate.
+The email should pitch the project to them, explain briefly why their specific skills stood out to me as a mathematical match, and invite them to an introductory interview.`;
+
+      return {
+        id: user?.id,
+        name: user?.name,
+        email: user?.email,
+        skills: user?.skills,
+        matchScore: rec.score,
+        outreachPrompt: missingPrompt
+      };
+    });
+
+    res.json({ candidates: enhancedCandidates });
+
+  } catch (error) {
+    console.error('Employer candidate search error:', error);
+    res.status(500).json({ error: 'Failed to search candidates' });
+  }
+});
+
 export default router;

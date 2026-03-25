@@ -12,6 +12,7 @@ export default function Signup() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [role, setRole] = useState('user');
   const [isLoading, setIsLoading] = useState(false);
   const { signup } = useAuth();
   const navigate = useNavigate();
@@ -22,7 +23,7 @@ export default function Signup() {
     setIsLoading(true);
 
     try {
-      await signup(name, email, password);
+      await signup(name, email, password, role);
       toast({
         title: "Account Created!",
         description: "Please check your email to verify your account before signing in.",
@@ -116,6 +117,25 @@ export default function Signup() {
                   />
                 </div>
               </div>
+              
+              <div className="space-y-3 pb-2 pt-1">
+                <label className="text-sm font-bold text-foreground block">Account Type</label>
+                <div className="grid grid-cols-2 gap-3">
+                  <div
+                    onClick={() => setRole('user')}
+                    className={`p-3 rounded-lg border-2 cursor-pointer transition-all ${role === 'user' ? 'border-primary bg-primary/5 shadow-md' : 'border-muted hover:border-primary/50'}`}
+                  >
+                    <div className="font-bold text-sm text-center text-foreground">Talent (Finding Jobs)</div>
+                  </div>
+                  <div
+                    onClick={() => setRole('employer')}
+                    className={`p-3 rounded-lg border-2 cursor-pointer transition-all ${role === 'employer' ? 'border-primary bg-primary/5 shadow-md' : 'border-muted hover:border-primary/50'}`}
+                  >
+                     <div className="font-bold text-sm text-center text-foreground">Employer (Hiring)</div>
+                  </div>
+                </div>
+              </div>
+
               <Button type="submit" className="w-full h-11 font-bold shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all" disabled={isLoading}>
                 {isLoading ? (
                   <>

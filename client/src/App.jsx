@@ -5,6 +5,7 @@ import Home from './pages/Home';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
 import Dashboard from './pages/Dashboard';
+import EmployerDashboard from './pages/EmployerDashboard';
 import Profile from './pages/Profile';
 import AdminJobs from './pages/AdminJobs';
 import AdminUsers from './pages/AdminUsers';
@@ -36,6 +37,20 @@ function ProtectedRoute({ children, adminOnly = false }) {
   return children;
 }
 
+function EmployerRoute({ children }) {
+  const { user, loading } = useAuth();
+  if (loading) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-muted/30">
+        <Loader2 className="h-10 w-10 animate-spin text-primary opacity-50 mb-4" />
+      </div>
+    );
+  }
+  if (!user) return <Navigate to="/login" />;
+  if (user.role !== 'employer' && user.role !== 'admin') return <Unauthorized />;
+  return children;
+}
+
 function PublicRoute({ children }) {
   const { user, loading } = useAuth();
   if (loading) {
@@ -45,7 +60,11 @@ function PublicRoute({ children }) {
       </div>
     );
   }
-  if (user) return <Navigate to="/dashboard" />;
+  if (user) {
+    if (user.role === 'employer') return <Navigate to="/employer-dashboard" />;
+    if (user.role === 'admin') return <Navigate to="/admin" />;
+    return <Navigate to="/dashboard" />;
+  }
   return children;
 }
 
@@ -59,6 +78,7 @@ function AppRoutes() {
           <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
           <Route path="/signup" element={<PublicRoute><Signup /></PublicRoute>} />
           <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+          <Route path="/employer-dashboard" element={<EmployerRoute><EmployerDashboard /></EmployerRoute>} />
           <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
           <Route path="/admin" element={<ProtectedRoute adminOnly><AdminJobs /></ProtectedRoute>} />
           <Route path="/admin/users" element={<ProtectedRoute adminOnly><AdminUsers /></ProtectedRoute>} />

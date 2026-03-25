@@ -25,12 +25,19 @@ export default function Navbar() {
   const isActive = (path) => location.pathname === path;
 
   const navLinks = [
-    { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { path: '/profile', label: 'Profile', icon: User },
+    ...(user?.role === 'user' ? [
+      { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+      { path: '/profile', label: 'Profile', icon: User },
+    ] : []),
+    ...(user?.role === 'employer' ? [
+      { path: '/employer-dashboard', label: 'Employer Dashboard', icon: LayoutDashboard },
+      { path: '/profile', label: 'Profile', icon: User },
+    ] : []),
     ...(user?.role === 'admin' ? [
       { path: '/admin', label: 'Manage Jobs', icon: Briefcase },
       { path: '/admin/users', label: 'Manage Users', icon: Shield },
-      { path: '/admin/analytics', label: 'Analytics', icon: BarChart3 }
+      { path: '/admin/analytics', label: 'Analytics', icon: BarChart3 },
+      { path: '/profile', label: 'Profile', icon: User },
     ] : [])
   ];
 

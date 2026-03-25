@@ -18,7 +18,7 @@ function generateSecureToken(): string {
 // ──── POST /api/auth/signup ────
 router.post('/signup', async (req: Request, res: Response): Promise<void> => {
   try {
-    const { name, email, password } = req.body;
+    const { name, email, password, role } = req.body;
 
     if (!name || !email || !password) {
       res.status(400).json({ error: 'Name, email, and password are required.' });
@@ -41,9 +41,12 @@ router.post('/signup', async (req: Request, res: Response): Promise<void> => {
     const hashedPassword = await bcrypt.hash(password, 12);
     const verifyToken = generateSecureToken();
 
+    // Enforce role assignment securely
+    const assignedRole = role === 'employer' ? 'employer' : 'user';
+
     // Create user
     const user = await prisma.user.create({
-      data: { name, email, hashedPassword, verifyToken, isVerified: false },
+      data: { name, email, hashedPassword, verifyToken, isVerified: false, role: assignedRole },
       select: { id: true, name: true, email: true, role: true, isVerified: true, createdAt: true }
     });
 
